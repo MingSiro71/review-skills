@@ -58,7 +58,8 @@ branch-review のスクリプトを、PR から確定した base を引数に渡
 bash ~/.claude/skills/branch-review/scripts/review-context.sh <PR_BASE>
 ```
 
-`ROOT` `BASE_REF` `HEAD_SHA` `OUTFILE` `DIFF_CMD` と変更ファイル一覧を控える。
+`ROOT` `BASE_REF` `HEAD_SHA` `OUTDIR` `OUTFILE` `DIFF_CMD` と変更ファイル一覧を控える。
+スクリプトは `REL_TO_ROOT` も出力するが、**pr-review では使わない**（該当箇所は下記の GitHub permalink にする）。
 
 branch-review にある **base の確認ダイアログは行わない**。あれは PR 未作成ブランチで派生元を誤ることへの
 ガードであり、PR 起点では base が PR から一意に決まるため不要。解決された base は次のように口頭で提示するだけでよい:
@@ -69,12 +70,12 @@ branch-review にある **base の確認ダイアログは行わない**。あ�
 
 ### 3. ルール所在の特定 / 配布レビュー / 評価 / 統合
 
-`~/.claude/skills/branch-review/SKILL.md` の手順 3〜6 をそのまま実行する。ルール所在エージェント、8 観点の配布、
+`~/.claude/skills/branch-review/SKILL.md` の手順 3〜6（手順6 のリンク検証を含む）をそのまま実行する。ルール所在エージェント、8 観点の配布、
 別エージェントによる評価（閾値75）、あなた自身による統合と md 書き出しまで、内容も責務分担も変えない。
 
 ### 4. 該当箇所の書式（branch-review を上書き）
 
-`common.md` の `file:///` リンク形式は使わない。GitHub の permalink を使う。配布レビューの各サブエージェントの
+`common.md` の相対リンク形式は使わない。GitHub の permalink を使う。配布レビューの各サブエージェントの
 起動プロンプトにこの形式を明記し、`HEAD_SHA` を添える（common.md は「起動プロンプトで permalink 形式を
 指示された場合はそちらに従う」と規定している）。
 
