@@ -128,14 +128,7 @@ bash <skill-dir>/scripts/review-context.sh [base-branch]
 | `references/scoring/design.md` | 観点8 |
 | `references/scoring/rules.md` | 観点5 |
 | `references/scoring/test-design.md` | 観点6 |
-
-**観点7 だけは指摘の性質で採点基準が変わる**ため、担当には `bug.md` と `rules.md` の**両方**を渡し、
-振り分けも評価担当に判断させる。
-
-- テストが誤りを見逃す性質のもの（素通りするアサーション、実データで成立しないフィクスチャ）→ `bug.md`
-- テストコードとテストデザインドキュメントの記述の対応のずれ → `rules.md`
-
-（観点7 の見直しは未了。観点6 と同じく専用の採点基準に移す予定。）
+| `references/scoring/test-fidelity.md` | 観点7 |
 
 **閾値は75。** 75未満は落とす（採否は手順6 で行う。採点基準ファイルには閾値を書いていない）。
 
