@@ -31,7 +31,7 @@ fi
 MERGE_BASE="$(git merge-base "$BASE_REF" HEAD)"
 
 # --- 出力先 ---
-OUTDIR="$ROOT/.claude-scratchpad/review"
+OUTDIR="$ROOT/.claude-scratchpad/reviews"
 # 出力先の md から見たリポジトリルートへの相対パス（該当箇所リンク用）。OUTDIR の段数と合わせる
 REL_TO_ROOT="../.."
 
