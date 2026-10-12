@@ -5,6 +5,10 @@ description: 現ブランチの変更を、8つの観点をサブエージェン
 
 # 概要
 
+この文書で `<branch-review のディレクトリ>` と書いたものは、この SKILL.md が置かれているディレクトリを指す
+（スキルとして起動された場合は `${CLAUDE_SKILL_DIR}`）。コマンドやサブエージェントへの指示では、
+実際の絶対パスに置き換えてから使う。
+
 現ブランチの変更（`origin/<base>...HEAD` の diff）をレビューし、読者が対応判断を下すための文書として
 `~/.claude/projects/<slug>/docs/review-<pr番号>-<連番>.md` に書き出す。
 
@@ -24,7 +28,7 @@ description: 現ブランチの変更を、8つの観点をサブエージェン
 作業リポジトリのルートで実行し、対象と出力先を確定する:
 
 ```bash
-bash <skill-dir>/scripts/review-context.sh [base-branch]
+bash <branch-review のディレクトリ>/scripts/review-context.sh [base-branch]
 ```
 
 - `base` 省略時は「PR があればその base、無ければ develop」。ユーザーが base を指定したら引数で渡す。
@@ -89,9 +93,9 @@ bash <skill-dir>/scripts/review-context.sh [base-branch]
 各起動プロンプトに書くのは次だけ:
 
 - **必ず読むファイル3つ**（絶対パスで渡す）
-  - `~/.claude/skills/branch-review/references/perspectives/common.md`
-  - `~/.claude/skills/branch-review/references/perspectives/<担当観点のファイル>`
-  - `~/.claude/skills/branch-review/references/false-positives.md`
+  - `<branch-review のディレクトリ>/references/perspectives/common.md`
+  - `<branch-review のディレクトリ>/references/perspectives/<担当観点のファイル>`
+  - `<branch-review のディレクトリ>/references/false-positives.md`
 - あなたの担当は観点N である旨
 - レビュー対象の取得方法: `<DIFF_CMD>` を実行し、必要に応じて周辺コードを読むこと
 - `ROOT` / `BASE_REF` / `BRANCH` / 変更ファイル一覧
@@ -107,9 +111,9 @@ bash <skill-dir>/scripts/review-context.sh [base-branch]
 配布レビューで集まった全指摘と全判断ポイントを、評価担当のサブエージェント（`general-purpose`）に渡す。
 同じ diff を参照できるよう `DIFF_CMD` と `RULE_FILES` も渡す。あわせて次の2つを**必ず読ませる**:
 
-- `~/.claude/skills/branch-review/references/perspectives/common.md`（振り分け基準とフォーマット。
+- `<branch-review のディレクトリ>/references/perspectives/common.md`（振り分け基準とフォーマット。
   レビュー担当に課したものと同じ規定で判定させるため）
-- `~/.claude/skills/branch-review/references/false-positives.md`
+- `<branch-review のディレクトリ>/references/false-positives.md`
 
 **指摘に対する評価は3問。**
 

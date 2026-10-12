@@ -13,9 +13,9 @@ description: PR の URL を渡すと、その PR を現在の作業ディレク�
 1. **前処理** — PR を現在の作業ディレクトリに checkout し、base を PR から確定する（このスキル固有）
 2. **ルール所在の特定 / 配布レビュー / 評価 / 統合** — branch-review の手順 3〜6 をそのまま実行する
 
-`~/.claude/skills/branch-review/SKILL.md` を必ず読み、手順 3〜6・出力の制約・最終 md の構成はそちらに従うこと。
+`${CLAUDE_SKILL_DIR}/../branch-review/SKILL.md` を必ず読み、手順 3〜6・出力の制約・最終 md の構成はそちらに従うこと。
 観点ごとの指示とサブエージェント共通の規定（振り分け基準・指摘フォーマット・該当箇所の書式）は
-`~/.claude/skills/branch-review/references/perspectives/` 配下にあり、各サブエージェントが直接読む。
+`${CLAUDE_SKILL_DIR}/../branch-review/references/perspectives/` 配下にあり、各サブエージェントが直接読む。
 観点や出力形式をこのファイルで再定義しない。
 このファイルが上書きするのは、該当箇所の書式（後述の GitHub permalink）と md ヘッダだけ。
 
@@ -32,7 +32,7 @@ description: PR の URL を渡すと、その PR を現在の作業ディレク�
 作業リポジトリのルートで実行する:
 
 ```bash
-bash <skill-dir>/scripts/pr-checkout.sh <PR-URL>
+bash ${CLAUDE_SKILL_DIR}/scripts/pr-checkout.sh <PR-URL>
 ```
 
 引数は PR の URL のほか `owner/repo#123` や `123`（現在地のリポジトリ）も受け付ける。
@@ -55,7 +55,7 @@ bash <skill-dir>/scripts/pr-checkout.sh <PR-URL>
 branch-review のスクリプトを、PR から確定した base を引数に渡して実行する:
 
 ```bash
-bash ~/.claude/skills/branch-review/scripts/review-context.sh <PR_BASE>
+bash ${CLAUDE_SKILL_DIR}/../branch-review/scripts/review-context.sh <PR_BASE>
 ```
 
 `ROOT` `BASE_REF` `HEAD_SHA` `OUTDIR` `OUTFILE` `DIFF_CMD` と変更ファイル一覧を控える。
@@ -70,7 +70,7 @@ branch-review にある **base の確認ダイアログは行わない**。あ�
 
 ### 3. ルール所在の特定 / 配布レビュー / 評価 / 統合
 
-`~/.claude/skills/branch-review/SKILL.md` の手順 3〜6（手順6 のリンク検証を含む）をそのまま実行する。ルール所在エージェント、8 観点の配布、
+`${CLAUDE_SKILL_DIR}/../branch-review/SKILL.md` の手順 3〜6（手順6 のリンク検証を含む）をそのまま実行する。ルール所在エージェント、8 観点の配布、
 別エージェントによる評価（閾値75）、あなた自身による統合と md 書き出しまで、内容も責務分担も変えない。
 
 ### 4. 該当箇所の書式（branch-review を上書き）
