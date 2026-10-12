@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
 # レビュー対象と出力先を決定論的に算出して KEY=VALUE 形式で出力する。
-# 副作用なし（PR は作らない・ファイルも作らない）。読み取りのみ。
 #
 # 使い方: bash review-context.sh [base-branch]
 #   base 省略時: PR があればその baseRefName、無ければ develop。
@@ -40,15 +39,15 @@ fi
 
 MERGE_BASE="$(git merge-base "$BASE_REF" HEAD)"
 
-# --- 出力先: ~/.claude/projects/<slug>/docs (slug = worktree root の / を - に置換) ---
-SLUG="$(printf '%s' "$ROOT" | sed 's#/#-#g')"
-OUTDIR="$HOME/.claude/projects/$SLUG/docs"
+# --- 出力先 ---
+OUTDIR="$ROOT/.claude-scratchpad/review"
+# 出力先の md から見たリポジトリルートへの相対パス（該当箇所リンク用）。OUTDIR の段数と合わせる
+REL_TO_ROOT="../.."
 
-# --- 出力先の md から見たリポジトリルートへの相対パス（該当箇所リンク用） ---
-# md はリポジトリ外に置かれるので `../` で遡る。段数は環境で変わるため決め打ちしない。
-# OUTDIR はまだ存在しないことがあるので、実在を要求しない -m を使う。
-if ! REL_TO_ROOT="$(realpath -m --relative-to="$OUTDIR" "$ROOT" 2>/dev/null)"; then
-  REL_TO_ROOT="$(python3 -c 'import os,sys; print(os.path.relpath(sys.argv[1], sys.argv[2]))' "$ROOT" "$OUTDIR")"
+# 出力した md が未追跡ファイルとして残ると、次の pr-review が dirty_worktree で止まる。
+# 除外の設定はユーザーに任せ（README 参照）、ここでは無ければ知らせるだけにする。
+if ! git -C "$ROOT" check-ignore -q .claude-scratchpad/; then
+  echo "WARN=scratchpad_not_ignored" >&2
 fi
 
 # --- ファイル名タグと連番 ---

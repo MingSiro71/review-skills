@@ -10,7 +10,9 @@ description: 現ブランチの変更を、8つの観点をサブエージェン
 実際の絶対パスに置き換えてから使う。
 
 現ブランチの変更（`origin/<base>...HEAD` の diff）をレビューし、読者が対応判断を下すための文書として
-`~/.claude/projects/<slug>/docs/review-<pr番号>-<連番>.md` に書き出す。
+`<ROOT>/.claude-scratchpad/review/review-<pr番号>-<連番>.md` に書き出す。
+スクリプトが `WARN=scratchpad_not_ignored` を出したら、`.claude-scratchpad/` が git の除外設定に無い。
+レビューは続けてよいが、最後の報告で README の「レビュー結果の置き場所」に従って除外するよう伝える。
 
 プロセスは3段階（前処理を1つ挟む）:
 
@@ -34,15 +36,17 @@ bash <branch-review のディレクトリ>/scripts/review-context.sh [base-branc
 - `base` 省略時は「PR があればその base、無ければ develop」。ユーザーが base を指定したら引数で渡す。
 - 出力の `ROOT` `PR_NUMBER` `BASE_REF` `HEAD_SHA` `REL_TO_ROOT` `OUTFILE` `DIFF_CMD` と変更ファイル一覧を控える。
 
-### 2. base の確認（必須ダイアログ）
+### 2. base の確認
 
-レビューを開始する前に、`AskUserQuestion` で必ず確認を挟む:
+ユーザーが依頼文や引数で base を明示した場合は、それを確認済みとみなし、このダイアログを省いて先へ進む。
+
+明示されていない場合は、レビューを開始する前に `AskUserQuestion` で必ず確認を挟む:
 
 > `<BASE>` との差分でレビューを開始します。よろしいですか？
 
 - 解決された base（`<BASE>`）を提示し、「開始する / base を変えて再算出」を選ばせる。
 - base を変える場合は、指定された base を引数に手順 1 からやり直す。
-- 特に PR 未作成のブランチは develop 決め打ちで派生元を誤りやすい。この確認が唯一のガードなので省略しない。
+- 特に PR 未作成のブランチは develop 決め打ちで派生元を誤りやすい。base が明示されていない限り、この確認が唯一のガードなので省略しない。
 
 確認が取れてから先へ進む。
 
