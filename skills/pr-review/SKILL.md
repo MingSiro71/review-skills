@@ -55,18 +55,16 @@ bash ${CLAUDE_SKILL_DIR}/scripts/pr-checkout.sh <PR-URL>
 branch-review のスクリプトを、PR から確定した base を引数に渡して実行する:
 
 ```bash
-bash ${CLAUDE_SKILL_DIR}/../branch-review/scripts/review-context.sh <PR_BASE>
+bash ${CLAUDE_SKILL_DIR}/../branch-review/scripts/review-context.sh <PR_BASE> <PR_NUMBER>
 ```
 
 `ROOT` `BASE_REF` `HEAD_SHA` `OUTDIR` `OUTFILE` `DIFF_CMD` と変更ファイル一覧を控える。
 スクリプトは `REL_TO_ROOT` も出力するが、**pr-review では使わない**（該当箇所は下記の GitHub permalink にする）。
 
-branch-review にある **base の確認ダイアログは行わない**。あれは PR 未作成ブランチで派生元を誤ることへの
+branch-review にある **base の確認ダイアログは行わない**。あれは develop 決め打ちで派生元を誤ることへの
 ガードであり、PR 起点では base が PR から一意に決まるため不要。解決された base は次のように口頭で提示するだけでよい:
 
 > PR #123 (`feature/foo` → `develop`) を checkout しました。`origin/develop...HEAD` の差分でレビューします。
-
-同じ理由で、branch-review にある「PR 未作成ならドラフト PR を作る」分岐も適用しない。
 
 ### 3. ルール所在の特定 / 配布レビュー / 評価 / 統合
 

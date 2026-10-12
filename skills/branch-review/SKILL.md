@@ -10,7 +10,7 @@ description: 現ブランチの変更を、8つの観点をサブエージェン
 実際の絶対パスに置き換えてから使う。
 
 現ブランチの変更（`origin/<base>...HEAD` の diff）をレビューし、読者が対応判断を下すための文書として
-`<ROOT>/.claude-scratchpad/review/review-<pr番号>-<連番>.md` に書き出す。
+`<ROOT>/.claude-scratchpad/review/review-<branch>-<連番>.md` に書き出す（`/` と空白は `_` に置き換える）。
 スクリプトが `WARN=scratchpad_not_ignored` を出したら、`.claude-scratchpad/` が git の除外設定に無い。
 レビューは続けてよいが、最後の報告で README の「レビュー結果の置き場所」に従って除外するよう伝える。
 
@@ -33,8 +33,8 @@ description: 現ブランチの変更を、8つの観点をサブエージェン
 bash <branch-review のディレクトリ>/scripts/review-context.sh [base-branch]
 ```
 
-- `base` 省略時は「PR があればその base、無ければ develop」。ユーザーが base を指定したら引数で渡す。
-- 出力の `ROOT` `PR_NUMBER` `BASE_REF` `HEAD_SHA` `REL_TO_ROOT` `OUTFILE` `DIFF_CMD` と変更ファイル一覧を控える。
+- `base` 省略時は develop。ユーザーが base を指定したら引数で渡す。
+- 出力の `ROOT` `BASE_REF` `HEAD_SHA` `REL_TO_ROOT` `OUTFILE` `DIFF_CMD` と変更ファイル一覧を控える。
 
 ### 2. base の確認
 
@@ -46,11 +46,9 @@ bash <branch-review のディレクトリ>/scripts/review-context.sh [base-branc
 
 - 解決された base（`<BASE>`）を提示し、「開始する / base を変えて再算出」を選ばせる。
 - base を変える場合は、指定された base を引数に手順 1 からやり直す。
-- 特に PR 未作成のブランチは develop 決め打ちで派生元を誤りやすい。base が明示されていない限り、この確認が唯一のガードなので省略しない。
+- base を省略すると develop 決め打ちになり、派生元を誤りやすい。base が明示されていない限り、この確認が唯一のガードなので省略しない。
 
 確認が取れてから先へ進む。
-
-`PR_NUMBER` が空の場合（PR 未作成）は、確認した base を使って**先にドラフト PR を作成してから** 再度スクリプトを実行し、PR 番号を確定させる（ユーザーの方針）。ドラフト PR の本文は `pr-description` スキルに従って書く。
 
 ### 3. 実装ルール所在の特定
 
@@ -176,7 +174,7 @@ bash <branch-review のディレクトリ>/scripts/review-context.sh [base-branc
 
 並び順は、まず深刻度の高い順。深刻度が同じ指摘の間では、バグ → 設計・可読性 → 規約 の順に並べる。
 
-確定した内容を `OUTFILE`（`review-<pr番号>-<連番>.md`）に書き出す。出力ディレクトリが無ければ作成する。
+確定した内容を `OUTFILE`（`review-<branch>-<連番>.md`）に書き出す。出力ディレクトリが無ければ作成する。
 
 **書き出す直前に「最終 md の構成」と「出力の制約」を読み直すこと。** テンプレート外の欄を足す、
 却下したものの記録を残す、調査した事実を書く、変更内容を語り直す——これらは書いている最中に
@@ -211,7 +209,7 @@ cd "$(dirname <OUTFILE>)" && grep -oE '\]\([^)#]+' <OUTFILE> | sed 's/^](//' | s
 ## 最終 md の構成
 
 ```markdown
-# レビュー: PR #<番号> (<branch> → <base>)
+# レビュー: <branch> → <base>
 
 - 対象: `<BASE_REF>...HEAD`
 - 日付: <today>
@@ -252,7 +250,7 @@ cd "$(dirname <OUTFILE>)" && grep -oE '\]\([^)#]+' <OUTFILE> | sed 's/^](//' | s
 - **既に正しいと確認したものについて書かない。** 調査した事実の表示は読者の判断材料ではない
   （「なお、責務分割そのものは問題ない」「import 規約は既存の慣例に忠実」の類）。
   上と別のルールである。上は却下された指摘の話、こちらは最初から指摘ですらないものの話。
-- **変更内容の語り直しをしない。** 何が変わったかの説明は PR 本文の仕事であってレビューの仕事ではない。
+- **変更内容の語り直しをしない。** 何が変わったかの説明は変更の書き手（コミットメッセージや PR 本文）の仕事であってレビューの仕事ではない。
 - **合議の経過を書かない。** 評価担当が支持したか、スコアが何点だったか、何を却下したかは
   プロセスの内部状態であって読者の判断材料ではない。「評価:」欄を復活させない。
 - サマリに全体所感を書かない。件数と各件の見出しの列挙のみ。
