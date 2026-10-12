@@ -13,7 +13,7 @@ PRのURLを渡し、それを対象にレビューを行う。`/pr-review <URL>`
 
 ## レビュー結果の置き場所
 
-レビュー対象のリポジトリの `.claude-scratchpad/review/` に書き出す。
+レビュー対象のリポジトリの `.claude-scratchpad/reviews/` に書き出す。
 
 - branch-review: `review-<ブランチ名>-<連番>.md`（`/` と空白は `_` に置き換える）
 - pr-review: `review-<PR 番号>-<連番>.md`

@@ -10,7 +10,7 @@ description: 現ブランチの変更を、8つの観点をサブエージェン
 実際の絶対パスに置き換えてから使う。
 
 現ブランチの変更（`origin/<base>...HEAD` の diff）をレビューし、読者が対応判断を下すための文書として
-`<ROOT>/.claude-scratchpad/review/review-<branch>-<連番>.md` に書き出す（`/` と空白は `_` に置き換える）。
+`<ROOT>/.claude-scratchpad/reviews/review-<branch>-<連番>.md` に書き出す（`/` と空白は `_` に置き換える）。
 スクリプトが `WARN=scratchpad_not_ignored` を出したら、`.claude-scratchpad/` が git の除外設定に無い。
 レビューは続けてよいが、最後の報告で README の「レビュー結果の置き場所」に従って除外するよう伝える。
 
