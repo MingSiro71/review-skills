@@ -1,0 +1,183 @@
+name: Auto Versioning
+
+# main へ PR がマージされると、変更のあったプラグインのバージョンを自動で上げ、
+# その変更を main へ自動マージする。
+#
+# スキップ条件:
+#   - PR に bump:skip ラベルが付いている
+#   - PR 内で plugin.json の version を手動で変更済み（その差分があるプラグインは上げない）
+#   - プラグイン配下の変更が .github/ だけ
+#   - 自動バージョン用ブランチ（auto-version/*）のマージ（無限ループ防止）
+
+on:
+  pull_request:
+    types: [closed]
+    branches: [main]
+
+# ===== 設定: ここを変えれば挙動を調整できます =====
+env:
+  # 既定の上げ幅: patch / minor / major
+  # （PR に bump:minor / bump:major / bump:patch ラベルを付けると個別に上書きできます）
+  DEFAULT_BUMP_LEVEL: patch
+  # バージョンを上げたくない PR には bump:skip ラベルを付けてください。
+  # ※ スキップ判定はジョブの if 条件（bump:skip ラベルの有無）で行います。
+# ================================================
+
+permissions:
+  contents: write
+  pull-requests: write
+
+# 連続してマージされたときにバージョン更新がぶつからないよう、1 本ずつ実行する
+concurrency:
+  group: auto-version
+  cancel-in-progress: false
+
+jobs:
+  bump:
+    # マージされた PR のみ / 自動バージョンブランチは除外 / bump:skip ラベルは除外
+    if: >-
+      github.event.pull_request.merged == true &&
+      !startsWith(github.event.pull_request.head.ref, 'auto-version/') &&
+      !contains(github.event.pull_request.labels.*.name, 'bump:skip')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Determine bump level from labels
+        id: level
+        run: |
+          LEVEL="${DEFAULT_BUMP_LEVEL}"
+          if ${{ contains(github.event.pull_request.labels.*.name, 'bump:major') }}; then
+            LEVEL=major
+          elif ${{ contains(github.event.pull_request.labels.*.name, 'bump:minor') }}; then
+            LEVEL=minor
+          elif ${{ contains(github.event.pull_request.labels.*.name, 'bump:patch') }}; then
+            LEVEL=patch
+          fi
+          echo "level=$LEVEL" >> "$GITHUB_OUTPUT"
+          echo "Bump level: $LEVEL"
+
+      - name: Compute and apply version bumps
+        id: bump
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          MERGE_SHA: ${{ github.event.pull_request.merge_commit_sha }}
+          LEVEL: ${{ steps.level.outputs.level }}
+        run: |
+          set -euo pipefail
+
+          bump_semver() {
+            local ver="$1" level="$2"
+            local major minor patch
+            IFS='.' read -r major minor patch <<< "$ver"
+            case "$level" in
+              major) major=$((major + 1)); minor=0; patch=0 ;;
+              minor) minor=$((minor + 1)); patch=0 ;;
+              patch) patch=$((patch + 1)) ;;
+              *) echo "Unknown bump level: $level" >&2; exit 1 ;;
+            esac
+            echo "${major}.${minor}.${patch}"
+          }
+
+          MARKETPLACE=".claude-plugin/marketplace.json"
+          bumped_summary=""
+          any_bumped=false
+
+          # marketplace.json に登録された各プラグインを走査
+          while IFS=$'\t' read -r name source; do
+            # source は "./" や "./plugins/xxx" 形式 → 先頭の ./ を除去（ルートなら "."）
+            src="${source#./}"
+            src="${src%/}"
+            src="${src:-.}"
+            plugin_json="${src}/.claude-plugin/plugin.json"
+
+            if [ ! -f "$plugin_json" ]; then
+              echo "skip $name: $plugin_json not found"
+              continue
+            fi
+
+            # この PR で当該プラグイン配下に変更があったか（配布物ではない .github/ は見ない）。
+            # HEAD は後続のマージを含み得るので、PR のマージコミットと base を比べる
+            if git diff --quiet "$BASE_SHA" "$MERGE_SHA" -- "$src" ':(exclude).github'; then
+              echo "skip $name: no changes under $src"
+              continue
+            fi
+
+            head_ver="$(jq -r '.version' "$plugin_json")"
+            merged_ver="$(git show "$MERGE_SHA:$plugin_json" 2>/dev/null | jq -r '.version' 2>/dev/null || echo "")"
+            # base 時点の version（ファイルが無ければ空）
+            base_ver="$(git show "$BASE_SHA:$plugin_json" 2>/dev/null | jq -r '.version' 2>/dev/null || echo "")"
+
+            if [ -n "$base_ver" ] && [ "$merged_ver" != "$base_ver" ]; then
+              echo "skip $name: version manually changed ($base_ver -> $merged_ver)"
+              continue
+            fi
+
+            new_ver="$(bump_semver "$head_ver" "$LEVEL")"
+            echo "bump $name: $head_ver -> $new_ver"
+
+            # plugin.json を更新
+            tmp="$(mktemp)"
+            jq --arg v "$new_ver" '.version = $v' "$plugin_json" > "$tmp"
+            mv "$tmp" "$plugin_json"
+
+            # marketplace.json の該当エントリも同期
+            tmp="$(mktemp)"
+            jq --arg n "$name" --arg v "$new_ver" \
+              '(.plugins[] | select(.name == $n) | .version) = $v' "$MARKETPLACE" > "$tmp"
+            mv "$tmp" "$MARKETPLACE"
+
+            any_bumped=true
+            bumped_summary="${bumped_summary}- ${name}: ${head_ver} -> ${new_ver}"$'\n'
+          done < <(jq -r '.plugins[] | [.name, .source] | @tsv' "$MARKETPLACE")
+
+          if [ "$any_bumped" = true ]; then
+            {
+              echo "any_bumped=true"
+              echo "summary<<EOF"
+              echo "$bumped_summary"
+              echo "EOF"
+            } >> "$GITHUB_OUTPUT"
+          else
+            echo "any_bumped=false" >> "$GITHUB_OUTPUT"
+            echo "No version bumps needed."
+          fi
+
+      - name: Create branch, PR and auto-merge
+        if: steps.bump.outputs.any_bumped == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          LEVEL: ${{ steps.level.outputs.level }}
+          SUMMARY: ${{ steps.bump.outputs.summary }}
+        run: |
+          set -euo pipefail
+
+          BRANCH="auto-version/pr-${PR_NUMBER}"
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          git checkout -b "$BRANCH"
+          git add -A
+          git commit -m "chore: bump plugin versions (${LEVEL})" \
+            -m "Triggered by #${PR_NUMBER}" \
+            -m "${SUMMARY}"
+          git push origin "$BRANCH"
+
+          BODY="$(printf 'PR #%s のマージに伴う自動バージョン更新です。\n\n%s' "$PR_NUMBER" "$SUMMARY")"
+
+          gh pr create \
+            --base main \
+            --head "$BRANCH" \
+            --title "chore: bump plugin versions (${LEVEL})" \
+            --body "$BODY"
+
+          # main のルールセットは PR 必須・承認 0 件なので、GITHUB_TOKEN のままマージできる。
+          # GITHUB_TOKEN によるマージはワークフローを発火させないので、ここから再度バージョンが上がることもない
+          if ! gh pr merge "$BRANCH" --squash --delete-branch; then
+            echo "::warning::自動マージに失敗しました。作成された PR ($BRANCH) を手動でマージしてください。"
+          fi
