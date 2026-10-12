@@ -36,7 +36,7 @@ echo '/.claude-scratchpad/' >> "$(git rev-parse --git-path info/exclude)"
 | Claude Code 2.1.269 以上 | `claude plugin eval` の要件 |
 | git 2.31 以上 | `claude plugin eval` の要件 |
 | Claude のサブスクリプションのログイン、または API キー | モデルの呼び出し。普段の Claude Code と同じ認証で動く |
-| `bubblewrap`、`socat`（Linux / WSL2） | 同上。`sudo apt-get install bubblewrap socat` |
+| `bubblewrap`、`socat`（Linux / WSL2 のみ。macOS は不要） | Bash を許可したケースを OS のサンドボックス内で動かすため。`sudo apt-get install bubblewrap socat` |
 
 ### 実行
 
