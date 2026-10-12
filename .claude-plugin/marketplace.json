@@ -1,0 +1,17 @@
+{
+  "name": "review-skills",
+  "owner": {
+    "name": "ming"
+  },
+  "metadata": {
+    "description": "コードレビュー用スキルのマーケットプレイス"
+  },
+  "plugins": [
+    {
+      "name": "review-skills",
+      "source": "./",
+      "description": "ブランチ・PR の変更を 8 観点のサブエージェントでレビューし、評価・統合して md に書き出すスキル集",
+      "version": "0.1.0"
+    }
+  ]
+}
