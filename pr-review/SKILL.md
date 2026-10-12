@@ -1,6 +1,6 @@
 ---
 name: pr-review
-description: PR の URL を渡すと、その PR を現在の作業ディレクトリに checkout して、branch-review と同じ 3 段階プロセス（7観点の配布レビュー → 評価 → 統合）でレビューし、結果を md に書き出す。"この PR をレビューして <URL>" "pr-review <URL>" などと言われたときに使う。
+description: PR の URL を渡すと、その PR を現在の作業ディレクトリに checkout して、branch-review と同じ 3 段階プロセス（8観点の配布レビュー → 評価 → 統合）でレビューし、結果を md に書き出す。"この PR をレビューして <URL>" "pr-review <URL>" などと言われたときに使う。
 ---
 
 # 概要
@@ -11,10 +11,13 @@ description: PR の URL を渡すと、その PR を現在の作業ディレク�
 レビュー本体（配布・評価・統合）は branch-review と共通で、このスキルが追加で担うのは前処理だけ:
 
 1. **前処理** — PR を現在の作業ディレクトリに checkout し、base を PR から確定する（このスキル固有）
-2. **配布レビュー / 評価 / 統合** — branch-review の手順 3〜5 をそのまま実行する
+2. **ルール所在の特定 / 配布レビュー / 評価 / 統合** — branch-review の手順 3〜6 をそのまま実行する
 
-`~/.claude/skills/branch-review/SKILL.md` を必ず読み、手順 3〜5・指摘フォーマット・最終 md の構成はそちらに従うこと。
+`~/.claude/skills/branch-review/SKILL.md` を必ず読み、手順 3〜6・出力の制約・最終 md の構成はそちらに従うこと。
+観点ごとの指示とサブエージェント共通の規定（振り分け基準・指摘フォーマット・該当箇所の書式）は
+`~/.claude/skills/branch-review/references/perspectives/` 配下にあり、各サブエージェントが直接読む。
 観点や出力形式をこのファイルで再定義しない。
+このファイルが上書きするのは、該当箇所の書式（後述の GitHub permalink）と md ヘッダだけ。
 
 ## 前提
 
@@ -55,7 +58,8 @@ branch-review のスクリプトを、PR から確定した base を引数に渡
 bash ~/.claude/skills/branch-review/scripts/review-context.sh <PR_BASE>
 ```
 
-`BASE_REF` `OUTFILE` `DIFF_CMD` と変更ファイル一覧を控える。
+`ROOT` `BASE_REF` `HEAD_SHA` `OUTDIR` `OUTFILE` `DIFF_CMD` と変更ファイル一覧を控える。
+スクリプトは `REL_TO_ROOT` も出力するが、**pr-review では使わない**（該当箇所は下記の GitHub permalink にする）。
 
 branch-review にある **base の確認ダイアログは行わない**。あれは PR 未作成ブランチで派生元を誤ることへの
 ガードであり、PR 起点では base が PR から一意に決まるため不要。解決された base は次のように口頭で提示するだけでよい:
@@ -64,12 +68,27 @@ branch-review にある **base の確認ダイアログは行わない**。あ�
 
 同じ理由で、branch-review にある「PR 未作成ならドラフト PR を作る」分岐も適用しない。
 
-### 3. 配布レビュー / 評価 / 統合
+### 3. ルール所在の特定 / 配布レビュー / 評価 / 統合
 
-`~/.claude/skills/branch-review/SKILL.md` の手順 3〜5 をそのまま実行する。7 観点の配布、別エージェントによる
-評価、あなた自身による統合と md 書き出しまで、内容も責務分担も変えない。
+`~/.claude/skills/branch-review/SKILL.md` の手順 3〜6（手順6 のリンク検証を含む）をそのまま実行する。ルール所在エージェント、8 観点の配布、
+別エージェントによる評価（閾値75）、あなた自身による統合と md 書き出しまで、内容も責務分担も変えない。
 
-### 4. 書き出し時の追記
+### 4. 該当箇所の書式（branch-review を上書き）
+
+`common.md` の相対リンク形式は使わない。GitHub の permalink を使う。配布レビューの各サブエージェントの
+起動プロンプトにこの形式を明記し、`HEAD_SHA` を添える（common.md は「起動プロンプトで permalink 形式を
+指示された場合はそちらに従う」と規定している）。
+
+```
+https://github.com/<owner>/<repo>/blob/<HEAD_SHA>/src/foo/bar.ts#L23-L25
+```
+
+- **完全な SHA が必須。** `$(git rev-parse HEAD)` のようなコマンド埋め込みは不可（md はそのまま
+  レンダリングされるため展開されない）。手順 2 で控えた `HEAD_SHA` の値を文字列として埋め込む。
+- 行範囲は `#L<start>-L<end>` 形式。対象行の前後1行以上の文脈を含める。
+- 表示テキストは `src/foo/bar.ts:24` のようにパスと行番号にする。
+
+### 5. 書き出し時の追記
 
 最終 md のヘッダには、branch-review の構成に加えて PR の情報と作業ツリーの状態を書く:
 

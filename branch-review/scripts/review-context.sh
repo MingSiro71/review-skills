@@ -44,6 +44,13 @@ MERGE_BASE="$(git merge-base "$BASE_REF" HEAD)"
 SLUG="$(printf '%s' "$ROOT" | sed 's#/#-#g')"
 OUTDIR="$HOME/.claude/projects/$SLUG/docs"
 
+# --- 出力先の md から見たリポジトリルートへの相対パス（該当箇所リンク用） ---
+# md はリポジトリ外に置かれるので `../` で遡る。段数は環境で変わるため決め打ちしない。
+# OUTDIR はまだ存在しないことがあるので、実在を要求しない -m を使う。
+if ! REL_TO_ROOT="$(realpath -m --relative-to="$OUTDIR" "$ROOT" 2>/dev/null)"; then
+  REL_TO_ROOT="$(python3 -c 'import os,sys; print(os.path.relpath(sys.argv[1], sys.argv[2]))' "$ROOT" "$OUTDIR")"
+fi
+
 # --- ファイル名タグと連番 ---
 if [ -n "$PR_NUMBER" ]; then
   TAG="$PR_NUMBER"
@@ -62,8 +69,10 @@ echo "BRANCH=$BRANCH"
 echo "BASE=$BASE"
 echo "BASE_REF=$BASE_REF"
 echo "MERGE_BASE=$MERGE_BASE"
+echo "HEAD_SHA=$(git rev-parse HEAD)"
 echo "PR_NUMBER=$PR_NUMBER"
 echo "OUTDIR=$OUTDIR"
+echo "REL_TO_ROOT=$REL_TO_ROOT"
 echo "SERIAL=$SERIAL"
 echo "OUTFILE=$OUTDIR/review-${TAG}-${SERIAL}.md"
 echo "DIFF_CMD=git diff ${BASE_REF}...HEAD"
