@@ -17,8 +17,6 @@ description: PR の URL を渡すと、その PR を現在の作業ディレク�
 観点ごとの指示とサブエージェント共通の規定（振り分け基準・指摘フォーマット・該当箇所の書式）は
 `${CLAUDE_SKILL_DIR}/../branch-review/references/perspectives/` 配下にあり、各サブエージェントが直接読む。
 観点や出力形式をこのファイルで再定義しない。
-branch-review の SKILL.md を Read で読むと、中の `${CLAUDE_SKILL_DIR}` は展開されずに残る。
-これは `${CLAUDE_SKILL_DIR}/../branch-review` と読み替える（pr-review のディレクトリではない）。
 このファイルが上書きするのは、該当箇所の書式（後述の GitHub permalink）と md ヘッダだけ。
 
 ## 前提
