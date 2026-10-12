@@ -59,14 +59,11 @@ bash <branch-review のディレクトリ>/scripts/review-context.sh [base-branc
 - リポジトリルート（`<ROOT>`）の `CLAUDE.md`
 - 変更ファイルが属するディレクトリ、およびその親ディレクトリの `CLAUDE.md`
 - このリポジトリが使っているプラグインの規約ドキュメント。所在は次の手順で解決する。
-  1. 次の settings ファイルの `enabledPlugins` を読み、有効なプラグイン名を得る。無いファイルは飛ばす。
-     同じプラグインが複数のファイルに書かれていれば、上にあるファイルの値を採る（`false` なら無効）
-     - `/etc/claude-code/managed-settings.json`
-     - `<ROOT>/.claude/settings.local.json`
-     - `<ROOT>/.claude/settings.json`
-     - `~/.claude/settings.json`
-  2. `~/.claude/plugins/installed_plugins.json` の該当プラグインで、`projectPath` が `<ROOT>` に
-     一致するエントリの `installPath` を得る（一致が無ければ `scope` が `user` のエントリ）。
+  1. `<ROOT>` で `claude plugin list --json` を実行する。`enabled` は managed・ユーザー・プロジェクト・local の
+     settings をすべて反映した値なので、settings ファイルを自分で読まない
+  2. `enabled` が `true` のエントリのうち、`projectPath` が `<ROOT>` に一致するもの、または `scope` が `user` のものの
+     `installPath` を得る（同じ `id` が両方にあれば `projectPath` が一致する方）。
+     `projectPath` が他のディレクトリのエントリは使わない。
      `installPath` にバージョンが含まれるので、バージョン番号を決め打ちしない
   3. その `installPath` の `docs/` 配下（サブディレクトリを含む）を探す。`docs/` が無ければそのプラグインは対象外
 - 上記のうち、**コードがこうあるべきと定めている記述を含むものだけ**を返す。
