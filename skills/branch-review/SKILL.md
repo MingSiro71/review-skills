@@ -54,18 +54,32 @@ bash <branch-review のディレクトリ>/scripts/review-context.sh [base-branc
 
 **本文は返させない。** ここで本文を返させるとコンテキスト汚染回避という目的が失われる。
 
-探させる対象:
+探させる対象は、Claude Code がこのリポジトリで読む指示ファイルとスキルのすべて。無いファイル・ディレクトリは飛ばす。
 
-- リポジトリルート（`<ROOT>`）の `CLAUDE.md`
-- 変更ファイルが属するディレクトリ、およびその親ディレクトリの `CLAUDE.md`
-- このリポジトリが使っているプラグインの規約ドキュメント。所在は次の手順で解決する。
-  1. `<ROOT>` で `claude plugin list --json` を実行する。`enabled` は managed・ユーザー・プロジェクト・local の
-     settings をすべて反映した値なので、settings ファイルを自分で読まない
-  2. `enabled` が `true` のエントリのうち、`projectPath` が `<ROOT>` に一致するもの、または `scope` が `user` のものの
-     `installPath` を得る（同じ `id` が両方にあれば `projectPath` が一致する方）。
-     `projectPath` が他のディレクトリのエントリは使わない。
-     `installPath` にバージョンが含まれるので、バージョン番号を決め打ちしない
-  3. その `installPath` の `docs/` 配下（サブディレクトリを含む）を探す。`docs/` が無ければそのプラグインは対象外
+- 指示ファイル
+  - `<ROOT>` と、変更ファイルが属するディレクトリから `<ROOT>` までの各ディレクトリの
+    `CLAUDE.md` / `CLAUDE.local.md` / `AGENTS.md` / `.claude/CLAUDE.md`
+  - 同じ各ディレクトリの `.claude/rules/` 配下の md（サブディレクトリを含む）
+  - `~/.claude/CLAUDE.md` と `~/.claude/rules/` 配下の md
+  - `/etc/claude-code/CLAUDE.md`
+  - 上記から `@path` で読み込まれているファイル（バッククォートで囲まれた `@path` は読み込みではないので除く）
+- スキル。次の場所にある `SKILL.md` を探す。ディレクトリの深さは決め打ちしない
+  （`~/.claude/skills/synced/<ID>/<スキル名>/SKILL.md` のように深いものがある）
+  - プラグインのスキル。所在は次の手順で解決する
+    1. `<ROOT>` で `claude plugin list --json` を実行する。`enabled` は managed・ユーザー・プロジェクト・local の
+       settings をすべて反映した値なので、settings ファイルを自分で読まない
+    2. `enabled` が `true` のエントリのうち、`projectPath` が `<ROOT>` に一致するもの、または `scope` が `user` のものの
+       `installPath` を得る（同じ `id` が両方にあれば `projectPath` が一致する方）。
+       `projectPath` が他のディレクトリのエントリは使わない。
+       `installPath` にバージョンが含まれるので、バージョン番号を決め打ちしない
+    3. その `installPath` 配下の `SKILL.md` を探す
+  - `<ROOT>` と、変更ファイルが属するディレクトリから `<ROOT>` までの各ディレクトリの `.claude/skills/`
+  - `<ROOT>/.claude/commands/` と `~/.claude/commands/` 配下の md（スキルと同じ扱いで読み込まれる）
+  - `~/.claude/skills/`
+  - `/etc/claude-code/.claude/skills/`
+- 各スキルについては、`SKILL.md` に加えて、`SKILL.md` から参照されている文書をたどる（参照先からさらに参照されている文書も）。
+  規約の本文はスキルのディレクトリの外（例: プラグイン直下の `docs/`）に置かれていることがある。
+  `${CLAUDE_SKILL_DIR}` はその `SKILL.md` があるディレクトリと読み替える
 - 上記のうち、**コードがこうあるべきと定めている記述を含むものだけ**を返す。
   コマンドの実行方法・環境変数の設定手順・事務手続きを説明する文書は照合先にしない。
 - 変更ファイルの領域（backend / frontend / test）に対応するものだけを返させる。無関係な領域は返させない。
