@@ -13,7 +13,10 @@ PRのURLを渡し、それを対象にレビューを行う。`/pr-review <URL>`
 
 ## レビュー結果の置き場所
 
-レビュー対象のリポジトリの `.claude-scratchpad/review/review-<PR 番号>-<連番>.md` に書き出す。
+レビュー対象のリポジトリの `.claude-scratchpad/review/` に書き出す。
+
+- branch-review: `review-<ブランチ名>-<連番>.md`（`/` と空白は `_` に置き換える）
+- pr-review: `review-<PR 番号>-<連番>.md`
 
 レビューするリポジトリごとに、`.claude-scratchpad/` を git の除外設定に入れておく。
 この設定がないと出力した md が未追跡ファイルとして残り、次の pr-review が「未コミットの変更がある」と判定して正しく動作しない（止まる）。

@@ -1,11 +1,13 @@
 #!/usr/bin/env bash
 # レビュー対象と出力先を決定論的に算出して KEY=VALUE 形式で出力する。
 #
-# 使い方: bash review-context.sh [base-branch]
-#   base 省略時: PR があればその baseRefName、無ければ develop。
+# 使い方: bash review-context.sh [base-branch] [pr-number]
+#   base 省略時: develop。
+#   pr-number: pr-review 専用。渡したときだけファイル名のタグを PR 番号にする（無ければブランチ名）。
 set -euo pipefail
 
 BASE_ARG="${1:-}"
+PR_NUMBER="${2:-}"
 
 git rev-parse --is-inside-work-tree >/dev/null 2>&1 || {
   echo "ERROR=not_in_git_worktree" >&2; exit 1;
@@ -14,19 +16,8 @@ git rev-parse --is-inside-work-tree >/dev/null 2>&1 || {
 ROOT="$(git rev-parse --show-toplevel)"
 BRANCH="$(git rev-parse --abbrev-ref HEAD)"
 
-# --- PR 情報（gh があれば現ブランチの PR を引く） ---
-PR_NUMBER=""
-PR_BASE=""
-if command -v gh >/dev/null 2>&1; then
-  if PR_NUMBER="$(gh pr view --json number -q .number 2>/dev/null)"; then
-    PR_BASE="$(gh pr view --json baseRefName -q .baseRefName 2>/dev/null || true)"
-  else
-    PR_NUMBER=""
-  fi
-fi
-
-# --- base 解決: 引数 > PR の base > develop ---
-BASE="${BASE_ARG:-${PR_BASE:-develop}}"
+# --- base 解決: 引数 > develop ---
+BASE="${BASE_ARG:-develop}"
 
 # 比較対象の ref（origin/<base> があれば優先、無ければローカル <base>）
 if git rev-parse --verify --quiet "origin/$BASE" >/dev/null; then
@@ -54,7 +45,7 @@ fi
 if [ -n "$PR_NUMBER" ]; then
   TAG="$PR_NUMBER"
 else
-  TAG="nopr-$(printf '%s' "$BRANCH" | tr '/ ' '__')"
+  TAG="$(printf '%s' "$BRANCH" | tr '/ ' '__')"
 fi
 
 SERIAL=1
