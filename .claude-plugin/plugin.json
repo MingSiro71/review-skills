@@ -1,6 +1,6 @@
 {
   "name": "review-skills",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "ブランチ・PR の変更を 8 観点のサブエージェントでレビューし、評価・統合して md に書き出すスキル集",
   "author": {
     "name": "ming"
