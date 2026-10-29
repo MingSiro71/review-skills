@@ -49,7 +49,7 @@ bash <branch-review のディレクトリ>/scripts/review-context.sh [base-branc
 > 規約を探すプラグイン: `<ENABLED_PLUGINS の id を列挙。空なら「なし」>`
 
 - 解決された base（`<BASE>`）を提示し、「開始する / base を変えて再算出」を選ばせる。
-- 規約を探すプラグインの行は、照合先から漏れているプラグインにユーザーが気づくためのもの。省かない。
+- 規約を探すプラグインの行は省かない。照合先にするプラグインをユーザーが確かめるための行である。
 - base を変える場合は、指定された base を引数に手順 1 からやり直す。
 - base を省略すると develop 決め打ちになり、派生元を誤りやすい。base が明示されていない限り、この確認が唯一のガードなので省略しない。
 
@@ -72,9 +72,7 @@ bash <branch-review のディレクトリ>/scripts/review-context.sh [base-branc
   - 上記から `@path` で読み込まれているファイル（バッククォートで囲まれた `@path` は読み込みではないので除く）
 - スキル。次の場所にある `SKILL.md` を探す。ディレクトリの深さは決め打ちしない
   （`~/.claude/skills/synced/<ID>/<スキル名>/SKILL.md` のように深いものがある）
-  - プラグインのスキル。起動プロンプトで渡す `ENABLED_PLUGINS` の各 `installPath` 配下の `SKILL.md` を探す。
-    プラグインの所在は手順1 のスクリプトが解決済みなので、サブエージェントに settings や
-    `claude plugin list` を読ませて解決し直させない
+  - プラグインのスキル。`ENABLED_PLUGINS`（起動プロンプトで渡す）の各 `installPath` 配下の `SKILL.md` を探す
   - `<ROOT>` と、変更ファイルが属するディレクトリから `<ROOT>` までの各ディレクトリの `.claude/skills/`
   - `<ROOT>/.claude/commands/` と `~/.claude/commands/` 配下の md（スキルと同じ扱いで読み込まれる）
   - `~/.claude/skills/`
@@ -90,7 +88,7 @@ bash <branch-review のディレクトリ>/scripts/review-context.sh [base-branc
 
 `RULE_FILES` を控えたら、配布レビューに進む前に件数と、規約が見つかった出所（プラグイン id、または
 `CLAUDE.md` などの指示ファイル）をユーザーに1行で示す。0件なら0件であることを明示する。
-照合先が空のまま観点5 が指摘0件で終わると、規約に違反していないのか照合していないのか、レビューの読者には区別できない。
+観点5 の指摘が0件のとき、違反が無かったのか照合先が無かったのかをユーザーが区別するための行である。
 
 ### 4. 配布レビュー（8サブエージェントを並列起動）
 

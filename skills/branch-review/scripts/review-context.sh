@@ -70,9 +70,9 @@ echo "---CHANGED_FILES---"
 git diff --stat "${BASE_REF}...HEAD"
 
 # --- 有効なプラグイン（規約の照合先の候補）---
-# claude plugin list --json の enabled は managed・ユーザー・プロジェクト・local の settings を
-# すべて反映した値なので、settings ファイルを自分で読まない。
-# 同じ id に projectPath が ROOT に一致するエントリと scope=user のエントリがあれば前者を使う。
+# ROOT で有効なプラグインの id と installPath を1行ずつ出す。
+# enabled は managed・ユーザー・プロジェクト・local の settings を反映した値。
+# 同じ id に projectPath が ROOT に一致するエントリと scope=user のエントリがあれば前者を使い、
 # projectPath が他のディレクトリのエントリは使わない。
 echo "---ENABLED_PLUGINS---"
 if ! PLUGIN_JSON="$(cd "$ROOT" && claude plugin list --json 2>/dev/null)"; then
