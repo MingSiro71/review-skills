@@ -35,16 +35,21 @@ bash <branch-review のディレクトリ>/scripts/review-context.sh [base-branc
 
 - `base` 省略時は develop。ユーザーが base を指定したら引数で渡す。
 - 出力の `ROOT` `BASE_REF` `HEAD_SHA` `REL_TO_ROOT` `OUTFILE` `DIFF_CMD` と変更ファイル一覧を控える。
+- `---ENABLED_PLUGINS---` 以下の各行（`<プラグイン id> <installPath>`）を `ENABLED_PLUGINS` として控える。
+  `WARN=plugin_list_failed` / `WARN=plugin_list_parse_failed` が出たら空であり、プラグインの規約は照合先に入らない。
 
 ### 2. base の確認
 
 ユーザーが依頼文や引数で base を明示した場合は、それを確認済みとみなし、このダイアログを省いて先へ進む。
+その場合も、下の「規約を探すプラグイン」の行だけはユーザーに示してから進む。
 
 明示されていない場合は、レビューを開始する前に `AskUserQuestion` で必ず確認を挟む:
 
 > `<BASE>` との差分でレビューを開始します。よろしいですか？
+> 規約を探すプラグイン: `<ENABLED_PLUGINS の id を列挙。空なら「なし」>`
 
 - 解決された base（`<BASE>`）を提示し、「開始する / base を変えて再算出」を選ばせる。
+- 規約を探すプラグインの行は省かない。照合先にするプラグインをユーザーが確かめるための行である。
 - base を変える場合は、指定された base を引数に手順 1 からやり直す。
 - base を省略すると develop 決め打ちになり、派生元を誤りやすい。base が明示されていない限り、この確認が唯一のガードなので省略しない。
 
@@ -67,14 +72,7 @@ bash <branch-review のディレクトリ>/scripts/review-context.sh [base-branc
   - 上記から `@path` で読み込まれているファイル（バッククォートで囲まれた `@path` は読み込みではないので除く）
 - スキル。次の場所にある `SKILL.md` を探す。ディレクトリの深さは決め打ちしない
   （`~/.claude/skills/synced/<ID>/<スキル名>/SKILL.md` のように深いものがある）
-  - プラグインのスキル。所在は次の手順で解決する
-    1. `<ROOT>` で `claude plugin list --json` を実行する。`enabled` は managed・ユーザー・プロジェクト・local の
-       settings をすべて反映した値なので、settings ファイルを自分で読まない
-    2. `enabled` が `true` のエントリのうち、`projectPath` が `<ROOT>` に一致するもの、または `scope` が `user` のものの
-       `installPath` を得る（同じ `id` が両方にあれば `projectPath` が一致する方）。
-       `projectPath` が他のディレクトリのエントリは使わない。
-       `installPath` にバージョンが含まれるので、バージョン番号を決め打ちしない
-    3. その `installPath` 配下の `SKILL.md` を探す
+  - プラグインのスキル。`ENABLED_PLUGINS`（起動プロンプトで渡す）の各 `installPath` 配下の `SKILL.md` を探す
   - `<ROOT>` と、変更ファイルが属するディレクトリから `<ROOT>` までの各ディレクトリの `.claude/skills/`
   - `<ROOT>/.claude/commands/` と `~/.claude/commands/` 配下の md（スキルと同じ扱いで読み込まれる）
   - `~/.claude/skills/`
@@ -87,6 +85,10 @@ bash <branch-review のディレクトリ>/scripts/review-context.sh [base-branc
 - 変更ファイルの領域（backend / frontend / test）に対応するものだけを返させる。無関係な領域は返させない。
 
 返させる形式は1行1件、`<絶対パス> — <どの領域・どの観点向けか>` のみ。これを `RULE_FILES` として控える。
+
+`RULE_FILES` を控えたら、配布レビューに進む前に件数と、規約が見つかった出所（プラグイン id、または
+`CLAUDE.md` などの指示ファイル）をユーザーに1行で示す。0件なら0件であることを明示する。
+観点5 の指摘が0件のとき、違反が無かったのか照合先が無かったのかをユーザーが区別するための行である。
 
 ### 4. 配布レビュー（8サブエージェントを並列起動）
 
