@@ -58,13 +58,15 @@ branch-review のスクリプトを、PR から確定した base を引数に渡
 bash ${CLAUDE_SKILL_DIR}/../branch-review/scripts/review-context.sh <PR_BASE> <PR_NUMBER>
 ```
 
-`ROOT` `BASE_REF` `HEAD_SHA` `OUTDIR` `OUTFILE` `DIFF_CMD` と変更ファイル一覧を控える。
+`ROOT` `BASE_REF` `HEAD_SHA` `OUTDIR` `OUTFILE` `DIFF_CMD` と変更ファイル一覧、`ENABLED_PLUGINS` を控える
+（`ENABLED_PLUGINS` の扱いは branch-review の手順 1 に従う）。
 スクリプトは `REL_TO_ROOT` も出力するが、**pr-review では使わない**（該当箇所は下記の GitHub permalink にする）。
 
 branch-review にある **base の確認ダイアログは行わない**。あれは develop 決め打ちで派生元を誤ることへの
 ガードであり、PR 起点では base が PR から一意に決まるため不要。解決された base は次のように口頭で提示するだけでよい:
 
 > PR #123 (`feature/foo` → `develop`) を checkout しました。`origin/develop...HEAD` の差分でレビューします。
+> 規約を探すプラグイン: `<ENABLED_PLUGINS の id を列挙。空なら「なし」>`
 
 ### 3. ルール所在の特定 / 配布レビュー / 評価 / 統合
 

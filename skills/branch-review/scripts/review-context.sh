@@ -68,3 +68,28 @@ echo "OUTFILE=$OUTDIR/review-${TAG}-${SERIAL}.md"
 echo "DIFF_CMD=git diff ${BASE_REF}...HEAD"
 echo "---CHANGED_FILES---"
 git diff --stat "${BASE_REF}...HEAD"
+
+# --- 有効なプラグイン（規約の照合先の候補）---
+# claude plugin list --json の enabled は managed・ユーザー・プロジェクト・local の settings を
+# すべて反映した値なので、settings ファイルを自分で読まない。
+# 同じ id に projectPath が ROOT に一致するエントリと scope=user のエントリがあれば前者を使う。
+# projectPath が他のディレクトリのエントリは使わない。
+echo "---ENABLED_PLUGINS---"
+if ! PLUGIN_JSON="$(cd "$ROOT" && claude plugin list --json 2>/dev/null)"; then
+  echo "WARN=plugin_list_failed" >&2
+elif ! printf '%s' "$PLUGIN_JSON" | python3 -c '
+import json, sys
+root = sys.argv[1]
+picked = {}
+for e in json.load(sys.stdin):
+    if not e.get("enabled"):
+        continue
+    if e.get("projectPath") == root:
+        picked[e["id"]] = e["installPath"]
+    elif e.get("scope") == "user" and "projectPath" not in e:
+        picked.setdefault(e["id"], e["installPath"])
+for pid in sorted(picked):
+    print(pid, picked[pid])
+' "$ROOT"; then
+  echo "WARN=plugin_list_parse_failed" >&2
+fi
